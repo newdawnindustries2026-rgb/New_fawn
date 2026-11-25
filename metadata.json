@@ -1,0 +1,6 @@
+{
+  "name": "Clarion",
+  "description": "Realistic AI interview studio with customizable preloaded interviewer avatars, voice & multimodal coaching, and flexible model selection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

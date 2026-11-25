@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "UserStudioSettings": {
+      "title": "UserStudioSettings",
+      "description": "Authenticated user's Clarion studio profile and active interviewer/model preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "displayName": { "type": "string", "description": "Candidate display name." },
+        "activePersonaId": { "type": "string", "description": "Currently selected interviewer persona ID." },
+        "activeModelId": { "type": "string", "description": "Currently selected model preset ID or model name." },
+        "voiceAutoPlay": { "type": "boolean", "description": "Whether interviewer replies auto-speak via voice synthesis." },
+        "searchGrounding": { "type": "boolean", "description": "Whether Google Search grounding is enabled for Gemini models." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "displayName", "activePersonaId", "activeModelId", "voiceAutoPlay", "searchGrounding", "createdAt", "updatedAt"]
+    },
+    "InterviewerPersona": {
+      "title": "InterviewerPersona",
+      "description": "Custom or customized realistic interviewer avatar with preloaded personality characteristics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "name": { "type": "string", "description": "Interviewer name." },
+        "roleTitle": { "type": "string", "description": "Interviewer title and specialty." },
+        "companyArchetype": { "type": "string", "description": "Company environment archetype." },
+        "styleTag": { "type": "string", "description": "Short style tag shown on persona card." },
+        "warmth": { "type": "integer", "description": "Warmth score from 0 to 100." },
+        "rigor": { "type": "integer", "description": "Technical/analytical rigor score from 0 to 100." },
+        "followUpDepth": { "type": "integer", "description": "Depth of probing follow-ups from 0 to 100." },
+        "cadence": { "type": "string", "enum": ["conversational", "measured", "rapid"], "description": "Spoken conversational cadence." },
+        "voicePitch": { "type": "number", "description": "TTS pitch multiplier (0.5 to 2.0)." },
+        "voiceRate": { "type": "number", "description": "TTS speaking rate multiplier (0.5 to 2.0)." },
+        "systemPrompt": { "type": "string", "description": "Detailed realistic behavioral instructions for the interviewer." },
+        "presetDrawableKey": { "type": "string", "description": "Key for bundled photorealistic avatar drawable." },
+        "localPortraitFile": { "type": "string", "description": "Optional filename of runtime AI-generated portrait stored locally on device." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "name", "roleTitle", "companyArchetype", "styleTag", "warmth", "rigor", "followUpDepth", "cadence", "voicePitch", "voiceRate", "systemPrompt", "presetDrawableKey", "createdAt", "updatedAt"]
+    },
+    "ModelPreset": {
+      "title": "ModelPreset",
+      "description": "User-configured AI model preset supporting any Gemini model ID or custom OpenAI-compatible endpoint.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "label": { "type": "string", "description": "Human-friendly label for the model preset." },
+        "providerType": { "type": "string", "enum": ["gemini", "openai_compatible"], "description": "Inference backend type." },
+        "modelId": { "type": "string", "description": "Exact model identifier string." },
+        "baseUrl": { "type": "string", "description": "Custom endpoint URL for OpenAI-compatible models (empty for Gemini)." },
+        "temperature": { "type": "number", "description": "Sampling temperature from 0.0 to 2.0." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "label", "providerType", "modelId", "baseUrl", "temperature", "createdAt", "updatedAt"]
+    },
+    "InterviewSession": {
+      "title": "InterviewSession",
+      "description": "Recorded interview session metadata and executive evaluation scorecard.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "personaId": { "type": "string", "description": "ID of interviewer persona used." },
+        "personaName": { "type": "string", "description": "Display name of interviewer." },
+        "personaRole": { "type": "string", "description": "Role title of interviewer." },
+        "targetRole": { "type": "string", "description": "Job title or scenario the candidate is interviewing for." },
+        "modelLabel": { "type": "string", "description": "Display label of model used." },
+        "modelId": { "type": "string", "description": "Exact model ID used." },
+        "status": { "type": "string", "enum": ["active", "completed"], "description": "Session lifecycle status (locked once completed)." },
+        "turnCount": { "type": "integer", "description": "Number of conversation turns in the session." },
+        "overallScore": { "type": "integer", "description": "Overall readiness score 0-100." },
+        "clarityScore": { "type": "integer", "description": "Communication clarity score 0-100." },
+        "depthScore": { "type": "integer", "description": "Technical or strategic depth score 0-100." },
+        "confidenceScore": { "type": "integer", "description": "Executive presence and confidence score 0-100." },
+        "summaryFeedback": { "type": "string", "description": "Executive summary feedback generated at session completion." },
+        "strengths": { "type": "array", "description": "List of up to 10 key strengths." },
+        "improvements": { "type": "array", "description": "List of up to 10 actionable improvements." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "personaId", "personaName", "personaRole", "targetRole", "modelLabel", "modelId", "status", "turnCount", "overallScore", "clarityScore", "depthScore", "confidenceScore", "summaryFeedback", "strengths", "improvements", "createdAt", "updatedAt"]
+    },
+    "InterviewMessage": {
+      "title": "InterviewMessage",
+      "description": "Single immutable transcript turn within an interview session.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "senderRole": { "type": "string", "enum": ["interviewer", "candidate", "coach"], "description": "Speaker role." },
+        "content": { "type": "string", "description": "Spoken or typed dialogue text." },
+        "modelUsed": { "type": "string", "description": "Model ID that generated this turn (empty for candidate turns)." },
+        "hasAttachment": { "type": "boolean", "description": "Whether the turn included a multimodal resume/image/video attachment." },
+        "attachmentLabel": { "type": "string", "description": "Short label of attached media if present." },
+        "sequenceIndex": { "type": "integer", "description": "Monotonic turn index for ordering." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "senderRole", "content", "modelUsed", "hasAttachment", "attachmentLabel", "sequenceIndex", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserStudioSettings" },
+      "description": "Per-user Clarion studio profile and preferences."
+    },
+    "/users/{userId}/personas/{personaId}": {
+      "schema": { "$ref": "#/entities/InterviewerPersona" },
+      "description": "Per-user custom and customized interviewer avatars."
+    },
+    "/users/{userId}/model_presets/{presetId}": {
+      "schema": { "$ref": "#/entities/ModelPreset" },
+      "description": "Per-user custom AI model configurations."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/InterviewSession" },
+      "description": "Per-user interview sessions and executive scorecards."
+    },
+    "/users/{userId}/sessions/{sessionId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/InterviewMessage" },
+      "description": "Ordered immutable transcript messages for an interview session."
+    }
+  }
+}

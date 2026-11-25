@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Clarion</string>
+    <string name="auth_headline">Realistic AI interviews, voiced and tailored to you.</string>
+    <string name="auth_subtitle">Switch lifelike interviewer personas, tune personality traits, and run Gemini or any custom model endpoint.</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="tab_stage">Stage</string>
+    <string name="tab_avatars">Avatars</string>
+    <string name="tab_models">Models</string>
+    <string name="tab_history">History</string>
+    <string name="cd_persona_portrait">Interviewer portrait</string>
+    <string name="cd_mic_toggle">Toggle voice microphone</string>
+    <string name="cd_voice_toggle">Toggle interviewer voice playback</string>
+    <string name="cd_attach_media">Attach resume image or practice video</string>
+    <string name="cd_send_response">Send interview response</string>
+    <string name="cd_sign_out">Sign out</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_add">Create new</string>
+    <string name="cd_delete">Delete item</string>
+    <string name="cd_edit">Edit item</string>
+    <string name="cd_search_grounding">Toggle Google Search grounding</string>
+    <string name="cd_deep_thinking">Toggle deep thinking mode</string>
+</resources>

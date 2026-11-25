@@ -1,0 +1,276 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isStringListBounded(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || listVal[0] is string);
+    }
+
+    // --- Entity Validation Helpers ---
+
+    function isValidUserStudioSettings(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'displayName', 'activePersonaId', 'activeModelId',
+               'voiceAutoPlay', 'searchGrounding', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'displayName', 'activePersonaId', 'activeModelId',
+               'voiceAutoPlay', 'searchGrounding', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == userId &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             data.activePersonaId is string && data.activePersonaId.size() >= 1 && data.activePersonaId.size() <= 128 &&
+             data.activeModelId is string && data.activeModelId.size() >= 1 && data.activeModelId.size() <= 160 &&
+             data.voiceAutoPlay is bool &&
+             data.searchGrounding is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPersona(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'name', 'roleTitle', 'companyArchetype', 'styleTag',
+               'warmth', 'rigor', 'followUpDepth', 'cadence', 'voicePitch',
+               'voiceRate', 'systemPrompt', 'presetDrawableKey', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'name', 'roleTitle', 'companyArchetype', 'styleTag',
+               'warmth', 'rigor', 'followUpDepth', 'cadence', 'voicePitch',
+               'voiceRate', 'systemPrompt', 'presetDrawableKey', 'localPortraitFile',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.roleTitle is string && data.roleTitle.size() >= 1 && data.roleTitle.size() <= 120 &&
+             data.companyArchetype is string && data.companyArchetype.size() >= 1 && data.companyArchetype.size() <= 120 &&
+             data.styleTag is string && data.styleTag.size() >= 1 && data.styleTag.size() <= 40 &&
+             data.warmth is int && data.warmth >= 0 && data.warmth <= 100 &&
+             data.rigor is int && data.rigor >= 0 && data.rigor <= 100 &&
+             data.followUpDepth is int && data.followUpDepth >= 0 && data.followUpDepth <= 100 &&
+             data.cadence is string && data.cadence in ['conversational', 'measured', 'rapid'] &&
+             data.voicePitch is number && data.voicePitch >= 0.5 && data.voicePitch <= 2.0 &&
+             data.voiceRate is number && data.voiceRate >= 0.5 && data.voiceRate <= 2.0 &&
+             data.systemPrompt is string && data.systemPrompt.size() >= 1 && data.systemPrompt.size() <= 4000 &&
+             data.presetDrawableKey is string && data.presetDrawableKey.size() <= 64 &&
+             (!('localPortraitFile' in data) || data.localPortraitFile == null || (data.localPortraitFile is string && data.localPortraitFile.size() <= 256)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidModelPreset(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'label', 'providerType', 'modelId', 'baseUrl',
+               'temperature', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'label', 'providerType', 'modelId', 'baseUrl',
+               'temperature', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == userId &&
+             data.label is string && data.label.size() >= 1 && data.label.size() <= 80 &&
+             data.providerType is string && data.providerType in ['gemini', 'openai_compatible'] &&
+             data.modelId is string && data.modelId.size() >= 1 && data.modelId.size() <= 160 &&
+             data.baseUrl is string && data.baseUrl.size() <= 300 &&
+             data.temperature is number && data.temperature >= 0.0 && data.temperature <= 2.0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidSession(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'personaId', 'personaName', 'personaRole', 'targetRole',
+               'modelLabel', 'modelId', 'status', 'turnCount',
+               'overallScore', 'clarityScore', 'depthScore', 'confidenceScore',
+               'summaryFeedback', 'strengths', 'improvements', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'personaId', 'personaName', 'personaRole', 'targetRole',
+               'modelLabel', 'modelId', 'status', 'turnCount',
+               'overallScore', 'clarityScore', 'depthScore', 'confidenceScore',
+               'summaryFeedback', 'strengths', 'improvements', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == userId &&
+             data.personaId is string && data.personaId.size() >= 1 && data.personaId.size() <= 128 &&
+             data.personaName is string && data.personaName.size() >= 1 && data.personaName.size() <= 80 &&
+             data.personaRole is string && data.personaRole.size() >= 1 && data.personaRole.size() <= 120 &&
+             data.targetRole is string && data.targetRole.size() >= 1 && data.targetRole.size() <= 140 &&
+             data.modelLabel is string && data.modelLabel.size() >= 1 && data.modelLabel.size() <= 100 &&
+             data.modelId is string && data.modelId.size() >= 1 && data.modelId.size() <= 160 &&
+             data.status is string && data.status in ['active', 'completed'] &&
+             data.turnCount is int && data.turnCount >= 0 && data.turnCount <= 500 &&
+             data.overallScore is int && data.overallScore >= 0 && data.overallScore <= 100 &&
+             data.clarityScore is int && data.clarityScore >= 0 && data.clarityScore <= 100 &&
+             data.depthScore is int && data.depthScore >= 0 && data.depthScore <= 100 &&
+             data.confidenceScore is int && data.confidenceScore >= 0 && data.confidenceScore <= 100 &&
+             data.summaryFeedback is string && data.summaryFeedback.size() <= 4000 &&
+             isStringListBounded(data.strengths, 10) &&
+             isStringListBounded(data.improvements, 10) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMessage(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'senderRole', 'content', 'modelUsed',
+               'hasAttachment', 'attachmentLabel', 'sequenceIndex', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'senderRole', 'content', 'modelUsed',
+               'hasAttachment', 'attachmentLabel', 'sequenceIndex', 'createdAt'
+             ]) &&
+             data.userId is string && data.userId == userId &&
+             data.senderRole is string && data.senderRole in ['interviewer', 'candidate', 'coach'] &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 12000 &&
+             data.modelUsed is string && data.modelUsed.size() <= 160 &&
+             data.hasAttachment is bool &&
+             data.attachmentLabel is string && data.attachmentLabel.size() <= 160 &&
+             data.sequenceIndex is int && data.sequenceIndex >= 0 && data.sequenceIndex <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserStudioSettings(incoming(), userId);
+
+      allow update: if isValidUserStudioSettings(incoming(), userId) &&
+                       isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'activePersonaId', 'activeModelId',
+                         'voiceAutoPlay', 'searchGrounding', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Custom & customized interviewer avatars
+      match /personas/{personaId} {
+        allow get: if isOwner(userId) && isValidId(personaId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(personaId) &&
+                         isValidPersona(incoming(), userId);
+
+        allow update: if isValidPersona(incoming(), userId) &&
+                         isOwner(userId) &&
+                         isValidId(personaId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'name', 'roleTitle', 'companyArchetype', 'styleTag',
+                           'warmth', 'rigor', 'followUpDepth', 'cadence',
+                           'voicePitch', 'voiceRate', 'systemPrompt',
+                           'presetDrawableKey', 'localPortraitFile', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(personaId);
+      }
+
+      // Custom AI model presets
+      match /model_presets/{presetId} {
+        allow get: if isOwner(userId) && isValidId(presetId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(presetId) &&
+                         isValidModelPreset(incoming(), userId);
+
+        allow update: if isValidModelPreset(incoming(), userId) &&
+                         isOwner(userId) &&
+                         isValidId(presetId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'label', 'providerType', 'modelId', 'baseUrl',
+                           'temperature', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(presetId);
+      }
+
+      // Interview sessions & scorecards (terminal lock on completed status)
+      match /sessions/{sessionId} {
+        allow get: if isOwner(userId) && isValidId(sessionId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(sessionId) &&
+                         incoming().status == 'active' &&
+                         isValidSession(incoming(), userId);
+
+        allow update: if isValidSession(incoming(), userId) &&
+                         isOwner(userId) &&
+                         isValidId(sessionId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         existing().status == 'active' && (
+                           // Action 1: Increment turn count / switch model mid-interview
+                           (incoming().status == 'active' &&
+                            incoming().diff(existing()).affectedKeys().hasOnly([
+                              'turnCount', 'modelLabel', 'modelId', 'updatedAt'
+                            ])) ||
+                           // Action 2: Complete interview and lock scorecard
+                           (incoming().status == 'completed' &&
+                            incoming().diff(existing()).affectedKeys().hasOnly([
+                              'status', 'turnCount', 'overallScore', 'clarityScore',
+                              'depthScore', 'confidenceScore', 'summaryFeedback',
+                              'strengths', 'improvements', 'updatedAt'
+                            ]))
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+
+        // Append-only transcript messages
+        match /messages/{messageId} {
+          allow get: if isOwner(userId) && isValidId(sessionId) && isValidId(messageId);
+          allow list: if isOwner(userId) && isValidId(sessionId);
+
+          allow create: if isOwner(userId) &&
+                           isValidId(sessionId) &&
+                           isValidId(messageId) &&
+                           isValidMessage(incoming(), userId) &&
+                           exists(/databases/$(database)/documents/users/$(userId)/sessions/$(sessionId));
+
+          allow update: if false;
+          allow delete: if isOwner(userId) && isValidId(sessionId) && isValidId(messageId);
+        }
+      }
+    }
+  }
+}
